@@ -89,30 +89,32 @@
   
     // ---------- Currency conversion ----------
     // ---------- Currency conversion ----------
-async function convertCurrency() {
-  const from = fromCurrency.value;
-  const to = toCurrency.value;
-  const amount = parseFloat(amountInput.value) || 0;
-
-  currencyResult.textContent = "Fetching…";
-
-  try {
-    // Call your backend function
-    const url = `/api/convert?from=${from}&to=${to}&amount=${amount}`;
-    const res = await fetch(url);
-    const data = await res.json();
-
-    if (data.error) {
-      currencyResult.textContent = data.error;
-    } else {
-      const result = Number(data.converted).toLocaleString(undefined, { maximumFractionDigits: 6 });
-      currencyResult.textContent = `${amount} ${from} → ${result} ${to} (rate: ${data.rate})`;
+    async function convertCurrency() {
+      const from = fromCurrency.value;
+      const to = toCurrency.value;
+      const amount = parseFloat(amountInput.value) || 0;
+    
+      currencyResult.textContent = "Fetching…";
+    
+      try {
+        // Call the free public API directly
+        const res = await fetch(`https://open.er-api.com/v6/latest/${from}`);
+        const data = await res.json();
+    
+        if (!data.rates || !data.rates[to]) {
+          currencyResult.textContent = "Invalid currency code";
+          return;
+        }
+    
+        const rate = data.rates[to];
+        const converted = (amount * rate).toFixed(6);
+    
+        currencyResult.textContent = `${amount} ${from} → ${converted} ${to} (rate: ${rate})`;
+      } catch (err) {
+        currencyResult.textContent = "Server error — please try again.";
+        console.error(err);
+      }
     }
-  } catch (err) {
-    currencyResult.textContent = "Server error — please try again.";
-    console.error(err);
-  }
-}
 
   
     convertCurrencyBtn.addEventListener('click', convertCurrency);
