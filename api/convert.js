@@ -1,4 +1,7 @@
-export default async function handler(req, res) {
+const fetchFn = (...args) =>
+    import('node-fetch').then(({ default: fetch }) => fetch(...args));
+  
+  module.exports = async (req, res) => {
     const { from, to, amount } = req.query;
   
     if (!from || !to || !amount) {
@@ -6,9 +9,6 @@ export default async function handler(req, res) {
     }
   
     try {
-      // Ensure fetch works on both local and Vercel
-      const fetchFn = global.fetch || (await import('node-fetch')).default;
-  
       const response = await fetchFn(
         `https://api.exchangerate.host/convert?from=${from}&to=${to}&amount=${amount}`
       );
@@ -19,12 +19,12 @@ export default async function handler(req, res) {
       }
   
       return res.status(200).json({
-        result: data.result,
+        converted: data.result,
         rate: data.info?.rate || "N/A",
       });
     } catch (error) {
       console.error("Currency conversion failed:", error);
       return res.status(500).json({ error: "Currency conversion failed" });
     }
-  }
+  };
   
