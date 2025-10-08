@@ -6,19 +6,25 @@ export default async function handler(req, res) {
     }
   
     try {
-      // Free API (no API key needed)
-      const url = `https://api.exchangerate.host/convert?from=${from}&to=${to}&amount=${amount}`;
-      const response = await fetch(url);
+      // Ensure fetch works on both local and Vercel
+      const fetchFn = global.fetch || (await import('node-fetch')).default;
+  
+      const response = await fetchFn(
+        `https://api.exchangerate.host/convert?from=${from}&to=${to}&amount=${amount}`
+      );
       const data = await response.json();
   
       if (!data || !data.result) {
-        throw new Error("Invalid response from API");
+        throw new Error("Invalid API response");
       }
   
-      res.status(200).json({ result: data.result });
+      return res.status(200).json({
+        result: data.result,
+        rate: data.info?.rate || "N/A",
+      });
     } catch (error) {
       console.error("Currency conversion failed:", error);
-      res.status(500).json({ error: "Conversion failed" });
+      return res.status(500).json({ error: "Currency conversion failed" });
     }
   }
   
