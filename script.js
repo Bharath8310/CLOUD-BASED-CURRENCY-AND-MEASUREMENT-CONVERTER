@@ -88,25 +88,32 @@
     toCurrency.addEventListener('change', updateFlags);
   
     // ---------- Currency conversion ----------
-    async function convertCurrency() {
-        const from = fromCurrency.value;
-        const to = toCurrency.value;
-        const amount = parseFloat(amountInput.value) || 0;
-      
-        currencyResult.textContent = "Fetching…";
-      
-        // Use direct API (works locally too)
-        try {
-          const url = `https://api.exchangerate.host/convert?from=${from}&to=${to}&amount=${amount}`;
-          const r = await fetch(url);
-          const data = await r.json();
-          const result = Number(data.result).toLocaleString(undefined, { maximumFractionDigits: 6 });
-          currencyResult.textContent = `${amount} ${from} → ${result} ${to} (rate: ${data.info.rate})`;
-        } catch (err) {
-          currencyResult.textContent = "Conversion failed — check your internet.";
-          console.error(err);
-        }
-      }
+    // ---------- Currency conversion ----------
+async function convertCurrency() {
+  const from = fromCurrency.value;
+  const to = toCurrency.value;
+  const amount = parseFloat(amountInput.value) || 0;
+
+  currencyResult.textContent = "Fetching…";
+
+  try {
+    // Call your backend function
+    const url = `/api/convert?from=${from}&to=${to}&amount=${amount}`;
+    const res = await fetch(url);
+    const data = await res.json();
+
+    if (data.error) {
+      currencyResult.textContent = data.error;
+    } else {
+      const result = Number(data.converted).toLocaleString(undefined, { maximumFractionDigits: 6 });
+      currencyResult.textContent = `${amount} ${from} → ${result} ${to} (rate: ${data.rate})`;
+    }
+  } catch (err) {
+    currencyResult.textContent = "Server error — please try again.";
+    console.error(err);
+  }
+}
+
   
     convertCurrencyBtn.addEventListener('click', convertCurrency);
     // also real-time conversion when inputs change
