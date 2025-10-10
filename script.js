@@ -169,6 +169,8 @@
   const trendCanvas = el('trendChart');
   let trendChart;
 
+
+
   function populateHistoricalSelects() {
     for (const code of currencyList) {
       histFrom.add(new Option(code, code));
