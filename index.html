@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Currency & Measurement Converter</title>
   <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> <!-- ✅ Added for graph -->
 </head>
 <body>
   <header class="topbar">
@@ -41,6 +42,14 @@
       <div class="row">
         <button id="convertCurrencyBtn">Convert</button>
         <div id="currencyResult" class="result">—</div>
+      </div>
+
+      <!-- ✅ NEW FEATURE: Historical Data -->
+      <div class="row">
+        <button id="showHistoryBtn">Show 1-Month Trend</button>
+      </div>
+      <div class="card">
+        <canvas id="historyChart" width="400" height="200"></canvas>
       </div>
     </section>
 

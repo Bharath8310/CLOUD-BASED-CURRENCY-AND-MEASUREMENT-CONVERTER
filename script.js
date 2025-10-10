@@ -195,5 +195,79 @@
     }
   
     document.addEventListener('DOMContentLoaded', init);
+
+    // ---------- Historical Currency Data ----------
+const dateInput = document.getElementById('dateInput');
+const fetchDateBtn = document.getElementById('fetchDateBtn');
+const historicalRate = document.getElementById('historicalRate');
+const ctx = document.getElementById('currencyChart');
+
+let chartInstance = null;
+
+fetchDateBtn.addEventListener('click', async () => {
+  const from = fromCurrency.value;
+  const to = toCurrency.value;
+  const date = dateInput.value;
+
+  if (!date) {
+    alert('Please select a date');
+    return;
+  }
+
+  // Fetch rate for selected date
+  const res = await fetch(`https://api.exchangerate.host/${date}?base=${from}&symbols=${to}`);
+  const data = await res.json();
+  const rate = data.rates[to];
+
+  historicalRate.textContent = `On ${date}, 1 ${from} = ${rate} ${to}`;
+});
+
+// ---------- 1-Month Graph ----------
+async function loadMonthlyGraph(){
+  const from = fromCurrency.value;
+  const to = toCurrency.value;
+
+  const endDate = new Date();
+  const startDate = new Date();
+  startDate.setMonth(startDate.getMonth() - 1);
+
+  const formatDate = (d) => d.toISOString().split('T')[0];
+
+  const url = `https://api.exchangerate.host/timeseries?start_date=${formatDate(startDate)}&end_date=${formatDate(endDate)}&base=${from}&symbols=${to}`;
+
+  const res = await fetch(url);
+  const data = await res.json();
+
+  const labels = Object.keys(data.rates);
+  const values = labels.map(date => data.rates[date][to]);
+
+  // Destroy previous chart if exists
+  if (chartInstance) chartInstance.destroy();
+
+  chartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: `${from} to ${to} - Last 30 Days`,
+        data: values,
+        borderWidth: 2,
+        fill: false,
+        tension: 0.1
+      }]
+    },
+    options: {
+      scales: {
+        y: { beginAtZero: false }
+      }
+    }
+  });
+}
+
+// Load graph automatically when currencies change
+fromCurrency.addEventListener('change', loadMonthlyGraph);
+toCurrency.addEventListener('change', loadMonthlyGraph);
+document.addEventListener('DOMContentLoaded', loadMonthlyGraph);
+
   })();
   
