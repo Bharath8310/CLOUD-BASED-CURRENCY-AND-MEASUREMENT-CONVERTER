@@ -263,6 +263,25 @@
       showTrendBtn.disabled = false;
     }
   });
+  async function fetchCurrencyTrend(from, to) {
+    try {
+      const response = await fetch(`/api/xeTrend?from=${from}&to=${to}`);
+      const data = await response.json();
+  
+      if (!response.ok) {
+        console.error("Trend API Error:", data);
+        alert("Error fetching trend data");
+        return;
+      }
+  
+      console.log("Trend Data:", data);
+      // use this data to plot your chart
+    } catch (err) {
+      console.error("Trend fetch error:", err);
+      alert("Error fetching data!!");
+    }
+  }
+  
 
   // ---------- Init ----------
   function init() {
@@ -272,6 +291,7 @@
     convertCurrency();
     convertMeasurement();
   }
+  
 
   document.addEventListener('DOMContentLoaded', init);
 })();

@@ -1,27 +1,37 @@
-// /api/xeConvert.js
+// api/xeTrend.js
 export default async function handler(req, res) {
-  const { from, to, amount } = req.query;
+  const { from, to } = req.query;
 
-  const apiKey = process.env.XE_API_KEY; // Your Vercel environment variable name
-  const apiId = process.env.XE_API_ID;
-
-  if (!apiKey || !apiId) {
-    return res.status(500).json({ error: "API credentials not found" });
+  if (!from || !to) {
+    return res.status(400).json({ error: "Missing required parameters." });
   }
 
+  const apiId = process.env.XE_API_ID;
+  const apiKey = process.env.XE_API_KEY;
+
+  if (!apiId || !apiKey) {
+    return res.status(500).json({ error: "API credentials not set." });
+  }
+
+  // Adjust endpoint to your XE API access (example: historical rates)
+  const url = `https://xecdapi.xe.com/v1/historic_rate/period/?from=${from}&to=${to}&interval=daily&amount=1`;
+
   try {
-    const response = await fetch(
-      `https://xecdapi.xe.com/v1/convert_from.json/?from=${from}&to=${to}&amount=${amount}`,
-      {
-        headers: {
-          Authorization: "Basic " + Buffer.from(`${apiId}:${apiKey}`).toString("base64"),
-        },
-      }
-    );
+    const response = await fetch(url, {
+      headers: {
+        Authorization: "Basic " + Buffer.from(`${apiId}:${apiKey}`).toString("base64"),
+      },
+    });
 
     const data = await response.json();
+
+    if (!response.ok) {
+      return res.status(response.status).json({ error: data });
+    }
+
     res.status(200).json(data);
-  } catch (err) {
-    res.status(500).json({ error: "Failed to fetch conversion data" });
+  } catch (error) {
+    console.error("Trend API error:", error);
+    res.status(500).json({ error: "Server error fetching trend" });
   }
 }
