@@ -255,14 +255,14 @@ showHistoryBtn.addEventListener("click", async () => {
     showHistoryBtn.disabled = false;
   }
 });
-// ---------- USD Exchange Rate 1-Month Graph ----------
+// ---------- Reliable USD Exchange Rate Graph (Last 30 Days) ----------
 const showUSDGraphBtn = document.getElementById("showUSDGraphBtn");
 const usdChartCanvas = document.getElementById("usdChart");
 let usdChart;
 
 showUSDGraphBtn.addEventListener("click", async () => {
-  const to = toCurrency.value.toUpperCase(); // Target currency
-  const base = "USD"; // Always base as USD
+  const to = toCurrency.value.toUpperCase();
+  const base = "USD";
 
   if (base === to) {
     alert("Please select a different currency to compare with USD.");
@@ -280,26 +280,31 @@ showUSDGraphBtn.addEventListener("click", async () => {
     const startDate = start.toISOString().split("T")[0];
     const endDate = end.toISOString().split("T")[0];
 
-    // Use the exchangerate.host timeseries API
+    // ✅ Use the proper exchangerate.host timeseries endpoint
     const url = `https://api.exchangerate.host/timeseries?start_date=${startDate}&end_date=${endDate}&base=${base}&symbols=${to}`;
+
     const res = await fetch(url);
     const data = await res.json();
 
-    if (!data.success || !data.rates) {
+    // Check if API returned rates properly
+    if (!data || !data.rates || Object.keys(data.rates).length === 0) {
       alert("No data available for this currency pair.");
       return;
     }
 
-    const labels = Object.keys(data.rates);
+    // Extract dates and corresponding values
+    const labels = Object.keys(data.rates).sort();
     const values = labels.map(date => data.rates[date][to]);
 
-    if (!values.some(v => v)) {
-      alert("No historical data found for this currency pair.");
+    if (values.every(v => v == null)) {
+      alert("No valid exchange rate data available for this currency pair.");
       return;
     }
 
+    // Destroy any existing chart
     if (usdChart) usdChart.destroy();
 
+    // Create new chart
     usdChart = new Chart(usdChartCanvas, {
       type: "line",
       data: {
@@ -307,10 +312,11 @@ showUSDGraphBtn.addEventListener("click", async () => {
         datasets: [{
           label: `USD → ${to} (Last 30 Days)`,
           data: values,
-          borderColor: "#00BFFF",
+          borderColor: "#4A90E2",
           borderWidth: 2,
+          pointRadius: 2,
           fill: false,
-          tension: 0.2
+          tension: 0.3
         }]
       },
       options: {
@@ -318,17 +324,19 @@ showUSDGraphBtn.addEventListener("click", async () => {
         plugins: {
           title: {
             display: true,
-            text: `USD to ${to} Exchange Rate Trend (Last 30 Days)`
-          }
+            text: `USD to ${to} Exchange Rate Trend (Past 30 Days)`
+          },
+          legend: { display: false }
         },
         scales: {
-          y: { beginAtZero: false }
+          x: { title: { display: true, text: "Date" } },
+          y: { title: { display: true, text: "Exchange Rate" } }
         }
       }
     });
   } catch (err) {
-    console.error(err);
-    alert("Failed to load USD trend data.");
+    console.error("Error fetching exchange rates:", err);
+    alert("Error fetching data. Please try again later.");
   } finally {
     showUSDGraphBtn.textContent = "Show USD 1-Month Trend";
     showUSDGraphBtn.disabled = false;
