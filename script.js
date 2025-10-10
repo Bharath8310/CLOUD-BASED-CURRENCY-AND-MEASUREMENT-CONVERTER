@@ -176,66 +176,85 @@
   document.addEventListener('DOMContentLoaded', init);
 
   // ---------- Historical Currency Data + 1-Month Graph ----------
-  const showHistoryBtn = document.getElementById("showHistoryBtn");
-  const historyCanvas = document.getElementById("historyChart");
-  let historyChart;
+const showHistoryBtn = document.getElementById("showHistoryBtn");
+const historyCanvas = document.getElementById("historyChart");
+let historyChart;
 
-  showHistoryBtn.addEventListener("click", async () => {
-    const from = fromCurrency.value;
-    const to = toCurrency.value;
+showHistoryBtn.addEventListener("click", async () => {
+  const from = fromCurrency.value.toUpperCase();
+  const to = toCurrency.value.toUpperCase();
 
-    showHistoryBtn.textContent = "Loading...";
-    showHistoryBtn.disabled = true;
+  if (from === to) {
+    alert("Please select two different currencies.");
+    return;
+  }
 
-    try {
-      const end = new Date();
-      const start = new Date();
-      start.setDate(end.getDate() - 30);
+  showHistoryBtn.textContent = "Loading...";
+  showHistoryBtn.disabled = true;
 
-      const startDate = start.toISOString().split("T")[0];
-      const endDate = end.toISOString().split("T")[0];
+  try {
+    const end = new Date();
+    const start = new Date();
+    start.setDate(end.getDate() - 30);
 
-      const url = `https://api.exchangerate.host/timeseries?start_date=${startDate}&end_date=${endDate}&base=${from}&symbols=${to}`;
-      const res = await fetch(url);
-      const data = await res.json();
+    const startDate = start.toISOString().split("T")[0];
+    const endDate = end.toISOString().split("T")[0];
 
-      if (!data.rates) {
-        alert("No data available for this currency pair.");
-        return;
-      }
+    // ✅ Updated endpoint with version prefix
+    const url = `https://api.exchangerate.host/v1/timeseries?start_date=${startDate}&end_date=${endDate}&base=${from}&symbols=${to}`;
+    const res = await fetch(url);
+    const data = await res.json();
 
-      const labels = Object.keys(data.rates);
-      const values = labels.map(date => data.rates[date][to]);
-
-      if (historyChart) historyChart.destroy();
-
-      historyChart = new Chart(historyCanvas, {
-        type: "line",
-        data: {
-          labels,
-          datasets: [{
-            label: `${from} → ${to} (Last 30 Days)`,
-            data: values,
-            borderColor: "blue",
-            borderWidth: 2,
-            fill: false,
-            tension: 0.2
-          }]
-        },
-        options: {
-          responsive: true,
-          scales: {
-            y: { beginAtZero: false }
-          }
-        }
-      });
-    } catch (err) {
-      console.error(err);
-      alert("Failed to load historical data.");
-    } finally {
-      showHistoryBtn.textContent = "Show 1-Month Trend";
-      showHistoryBtn.disabled = false;
+    if (!data.success || !data.rates) {
+      alert("No data available for this currency pair.");
+      return;
     }
-  });
+
+    const labels = Object.keys(data.rates);
+    const values = labels.map(date => data.rates[date][to]);
+
+    if (!values.some(v => v)) {
+      alert("No historical data found for this currency pair.");
+      return;
+    }
+
+    if (historyChart) historyChart.destroy();
+
+    historyChart = new Chart(historyCanvas, {
+      type: "line",
+      data: {
+        labels,
+        datasets: [{
+          label: `${from} → ${to} (Last 30 Days)`,
+          data: values,
+          borderColor: "#00BFFF",
+          borderWidth: 2,
+          fill: false,
+          tension: 0.2
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: true },
+          title: {
+            display: true,
+            text: `Exchange Rate Trend: ${from} → ${to}`
+          }
+        },
+        scales: {
+          y: { beginAtZero: false }
+        }
+      }
+    });
+  } catch (err) {
+    console.error(err);
+    alert("Failed to load historical data.");
+  } finally {
+    showHistoryBtn.textContent = "Show 1-Month Trend";
+    showHistoryBtn.disabled = false;
+  }
+});
+
 
 })();
