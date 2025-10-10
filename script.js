@@ -265,7 +265,7 @@
     }
   });
   // ----------------- XE API Integration for New Features -----------------
-const xeApiKey = "YOUR_XE_API_KEY"; // Replace with your XE API key
+const xeApiKey = "573rl35geg7poqfvuo7ljv7qtq"; // Replace with your XE API key
 
 // Example: New feature 1 — Convert using XE API
 async function xeConvertCurrency(from, to, amount) {
