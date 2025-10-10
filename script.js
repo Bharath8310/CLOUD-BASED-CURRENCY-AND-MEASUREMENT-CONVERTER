@@ -264,6 +264,47 @@
       showTrendBtn.disabled = false;
     }
   });
+  // ----------------- XE API Integration for New Features -----------------
+const xeApiKey = "YOUR_XE_API_KEY"; // Replace with your XE API key
+
+// Example: New feature 1 — Convert using XE API
+async function xeConvertCurrency(from, to, amount) {
+  try {
+    const res = await fetch(`https://currencydata.xe.com/v1/convert?from=${from}&to=${to}&amount=${amount}&access_key=${xeApiKey}`);
+    const data = await res.json();
+
+    if(data.success) {
+      console.log(`XE Conversion: ${amount} ${from} → ${data.result} ${to}`);
+      return data.result;
+    } else {
+      console.error("XE API Error:", data.error);
+      return null;
+    }
+  } catch(err) {
+    console.error("XE API Fetch Error:", err);
+    return null;
+  }
+}
+
+// Example: New feature 2 — Historical XE Rates
+async function xeFetchHistorical(from, to, date) {
+  try {
+    const res = await fetch(`https://currencydata.xe.com/v1/convert?from=${from}&to=${to}&date=${date}&amount=1&access_key=${xeApiKey}`);
+    const data = await res.json();
+
+    if(data.success) {
+      console.log(`XE Historical: 1 ${from} → ${data.result} ${to} on ${date}`);
+      return data.result;
+    } else {
+      console.error("XE Historical Error:", data.error);
+      return null;
+    }
+  } catch(err) {
+    console.error("XE Historical Fetch Error:", err);
+    return null;
+  }
+}
+
 
   // ---------- Init ----------
   function init() {
