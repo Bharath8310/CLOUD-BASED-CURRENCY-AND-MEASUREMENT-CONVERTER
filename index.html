@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Currency & Measurement Converter</title>
   <link rel="stylesheet" href="style.css" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> <!-- ✅ Added for graph -->
+  <!-- ✅ Chart.js for graph plotting -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
   <header class="topbar">
@@ -16,7 +17,7 @@
   </header>
 
   <main class="container">
-    <!-- Currency converter -->
+    <!-- ---------- Currency Converter ---------- -->
     <section class="card">
       <h2>Currency Converter</h2>
 
@@ -43,17 +44,39 @@
         <button id="convertCurrencyBtn">Convert</button>
         <div id="currencyResult" class="result">—</div>
       </div>
-
-      <!-- ✅ NEW FEATURE: Historical Data -->
-      <div class="row">
-        <button id="showHistoryBtn">Show 1-Month Trend</button>
-      </div>
-      <div class="card">
-        <canvas id="historyChart" width="400" height="200"></canvas>
-      </div>
     </section>
 
-    <!-- Measurement converter -->
+    <!-- ---------- Historical Currency Data ---------- -->
+    <section class="card">
+      <h2>📅 Historical Currency Value</h2>
+      <label class="row">
+        <span>Select Date:</span>
+        <input type="date" id="historicalDate" />
+      </label>
+
+      <div class="row">
+        <select id="histFromCurrency"></select>
+        <div class="arrow">→</div>
+        <select id="histToCurrency"></select>
+      </div>
+
+      <button id="fetchHistoricalBtn">Get Value</button>
+      <div id="historicalResult" class="result">—</div>
+    </section>
+
+    <!-- ---------- Currency Trend (Graph) ---------- -->
+    <section class="card">
+      <h2>📊 Currency Trend (Past 30 Days)</h2>
+      <label class="row">
+        <span>Select Currency:</span>
+        <select id="trendCurrency"></select>
+      </label>
+
+      <button id="showTrendBtn">Show Trend</button>
+      <canvas id="trendChart" width="400" height="200"></canvas>
+    </section>
+
+    <!-- ---------- Measurement Converter ---------- -->
     <section class="card">
       <h2>Measurement Converter</h2>
 
@@ -86,14 +109,12 @@
   </main>
 
   <footer class="footer">
-    <small>Local testing: measurement conversions work offline. Currency conversions use a serverless function (see README instructions).</small>
+    <small>
+      Local testing: measurement conversions work offline. Currency conversions use a serverless function (see README instructions).
+    </small>
   </footer>
 
+  <!-- ✅ Link JS -->
   <script src="script.js" defer></script>
-  <div style="text-align:center; margin-top:20px;">
-    <button id="showUSDGraphBtn" class="btn">Show USD 1-Month Trend</button>
-    <canvas id="usdChart" width="400" height="200"></canvas>
-  </div>
-  
 </body>
 </html>
