@@ -175,86 +175,86 @@
 
   document.addEventListener('DOMContentLoaded', init);
 
-  // ---------- Historical Currency Data + 1-Month Graph ----------
-const showHistoryBtn = document.getElementById("showHistoryBtn");
-const historyCanvas = document.getElementById("historyChart");
-let historyChart;
+//   // ---------- Historical Currency Data + 1-Month Graph ----------
+// const showHistoryBtn = document.getElementById("showHistoryBtn");
+// const historyCanvas = document.getElementById("historyChart");
+// let historyChart;
 
-showHistoryBtn.addEventListener("click", async () => {
-  const from = fromCurrency.value.toUpperCase();
-  const to = toCurrency.value.toUpperCase();
+// showHistoryBtn.addEventListener("click", async () => {
+//   const from = fromCurrency.value.toUpperCase();
+//   const to = toCurrency.value.toUpperCase();
 
-  if (from === to) {
-    alert("Please select two different currencies.");
-    return;
-  }
+//   if (from === to) {
+//     alert("Please select two different currencies.");
+//     return;
+//   }
 
-  showHistoryBtn.textContent = "Loading...";
-  showHistoryBtn.disabled = true;
+//   showHistoryBtn.textContent = "Loading...";
+//   showHistoryBtn.disabled = true;
 
-  try {
-    const end = new Date();
-    const start = new Date();
-    start.setDate(end.getDate() - 30);
+//   try {
+//     const end = new Date();
+//     const start = new Date();
+//     start.setDate(end.getDate() - 30);
 
-    const startDate = start.toISOString().split("T")[0];
-    const endDate = end.toISOString().split("T")[0];
+//     const startDate = start.toISOString().split("T")[0];
+//     const endDate = end.toISOString().split("T")[0];
 
-    // ✅ Updated endpoint with version prefix
-    const url = `https://api.exchangerate.host/v1/timeseries?start_date=${startDate}&end_date=${endDate}&base=${from}&symbols=${to}`;
-    const res = await fetch(url);
-    const data = await res.json();
+//     // ✅ Updated endpoint with version prefix
+//     const url = `https://api.exchangerate.host/v1/timeseries?start_date=${startDate}&end_date=${endDate}&base=${from}&symbols=${to}`;
+//     const res = await fetch(url);
+//     const data = await res.json();
 
-    if (!data.success || !data.rates) {
-      alert("No data available for this currency pair.");
-      return;
-    }
+//     if (!data.success || !data.rates) {
+//       alert("No data available for this currency pair.");
+//       return;
+//     }
 
-    const labels = Object.keys(data.rates);
-    const values = labels.map(date => data.rates[date][to]);
+//     const labels = Object.keys(data.rates);
+//     const values = labels.map(date => data.rates[date][to]);
 
-    if (!values.some(v => v)) {
-      alert("No historical data found for this currency pair.");
-      return;
-    }
+//     if (!values.some(v => v)) {
+//       alert("No historical data found for this currency pair.");
+//       return;
+//     }
 
-    if (historyChart) historyChart.destroy();
+//     if (historyChart) historyChart.destroy();
 
-    historyChart = new Chart(historyCanvas, {
-      type: "line",
-      data: {
-        labels,
-        datasets: [{
-          label: `${from} → ${to} (Last 30 Days)`,
-          data: values,
-          borderColor: "#00BFFF",
-          borderWidth: 2,
-          fill: false,
-          tension: 0.2
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          legend: { display: true },
-          title: {
-            display: true,
-            text: `Exchange Rate Trend: ${from} → ${to}`
-          }
-        },
-        scales: {
-          y: { beginAtZero: false }
-        }
-      }
-    });
-  } catch (err) {
-    console.error(err);
-    alert("Failed to load historical data.");
-  } finally {
-    showHistoryBtn.textContent = "Show 1-Month Trend";
-    showHistoryBtn.disabled = false;
-  }
-});
+//     historyChart = new Chart(historyCanvas, {
+//       type: "line",
+//       data: {
+//         labels,
+//         datasets: [{
+//           label: `${from} → ${to} (Last 30 Days)`,
+//           data: values,
+//           borderColor: "#00BFFF",
+//           borderWidth: 2,
+//           fill: false,
+//           tension: 0.2
+//         }]
+//       },
+//       options: {
+//         responsive: true,
+//         plugins: {
+//           legend: { display: true },
+//           title: {
+//             display: true,
+//             text: `Exchange Rate Trend: ${from} → ${to}`
+//           }
+//         },
+//         scales: {
+//           y: { beginAtZero: false }
+//         }
+//       }
+//     });
+//   } catch (err) {
+//     console.error(err);
+//     alert("Failed to load historical data.");
+//   } finally {
+//     showHistoryBtn.textContent = "Show 1-Month Trend";
+//     showHistoryBtn.disabled = false;
+//   }
+// });
 // ---------- Reliable USD Exchange Rate Graph (Last 30 Days) ----------
 const showUSDGraphBtn = document.getElementById("showUSDGraphBtn");
 const usdChartCanvas = document.getElementById("usdChart");
