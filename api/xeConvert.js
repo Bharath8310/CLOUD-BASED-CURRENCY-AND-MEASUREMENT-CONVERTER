@@ -15,10 +15,6 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Convert date to timestamp format if needed
-    const timestamp = new Date(date).toISOString();
-    
-    // Try the historic_rate endpoint
     const url = `https://xecdapi.xe.com/v1/historic_rate/?from=${from}&to=${to}&date=${date}&amount=${amount}`;
 
     console.log(`[xeConvert] Fetching: ${url}`);
@@ -36,7 +32,7 @@ export default async function handler(req, res) {
     console.log(`[xeConvert] Response status: ${response.status}`);
 
     const data = await response.json();
-    console.log(`[xeConvert] Response body:`, JSON.stringify(data, null, 2));
+    console.log(`[xeConvert] Full response:`, JSON.stringify(data, null, 2));
 
     if (!response.ok) {
       console.error('[xeConvert] XE API Error:', data);
@@ -46,26 +42,41 @@ export default async function handler(req, res) {
       });
     }
 
-    // Extract rate from response
+    // Extract rate from XE API response
+    // XE API returns the rate in different formats, check all possibilities
     let rate = null;
 
-    // Check common response formats
-    if (data.mid !== undefined && data.mid !== null) {
-      rate = parseFloat(data.mid);
-      console.log(`[xeConvert] Found rate in 'mid' field: ${rate}`);
-    } else if (data.quotes && Array.isArray(data.quotes) && data.quotes.length > 0) {
-      rate = parseFloat(data.quotes[0].mid);
-      console.log(`[xeConvert] Found rate in 'quotes[0].mid': ${rate}`);
-    } else if (data.rate !== undefined && data.rate !== null) {
-      rate = parseFloat(data.rate);
-      console.log(`[xeConvert] Found rate in 'rate' field: ${rate}`);
+    // Try all possible fields where the rate might be
+    const possibleFields = [
+      data.mid,
+      data.rate,
+      data.to,
+      data.conversion,
+      data.exchange_rate,
+      data.value,
+      data.quotes?.[0]?.mid,
+      data.quotes?.[0]?.rate,
+      data.rates?.[to],
+      data.rates?.to?.[to]
+    ];
+
+    for (const field of possibleFields) {
+      if (field !== undefined && field !== null && !isNaN(parseFloat(field))) {
+        rate = parseFloat(field);
+        console.log(`[xeConvert] Found rate: ${rate}`);
+        break;
+      }
     }
 
     if (rate === null || isNaN(rate)) {
-      console.error("[xeConvert] Could not extract valid rate from response:", data);
+      console.error("[xeConvert] Could not extract rate. Response keys:", Object.keys(data));
+      console.error("[xeConvert] Full response data:", data);
+      
+      // Return the response so frontend can see what we got
       return res.status(500).json({ 
-        error: "Could not parse exchange rate from API response. The API may not have data for this date.",
-        apiResponse: data 
+        error: "Could not parse exchange rate. Check the response structure.",
+        responseKeys: Object.keys(data),
+        fullResponse: data
       });
     }
 
@@ -83,10 +94,12 @@ export default async function handler(req, res) {
     });
 
   } catch (error) {
-    console.error('[xeConvert] Server error:', error);
+    console.error('[xeConvert] Server error:', error.message);
+    console.error('[xeConvert] Stack:', error.stack);
     res.status(500).json({ 
       error: "Server error fetching historical rate", 
-      details: error.message 
+      details: error.message,
+      stack: error.stack
     });
   }
 }
