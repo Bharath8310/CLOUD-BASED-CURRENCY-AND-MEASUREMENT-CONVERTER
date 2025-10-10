@@ -68,7 +68,7 @@
   fromCurrency.addEventListener('change', updateFlags);
   toCurrency.addEventListener('change', updateFlags);
 
-  // ---------- Currency conversion ----------
+  // ---------- Currency conversion (current) ----------
   async function convertCurrency() {
     const from = fromCurrency.value;
     const to = toCurrency.value;
@@ -157,23 +157,31 @@
     localStorage.setItem('theme', isDark ? 'dark' : 'light');
   });
 
-  // ---------- Historical Currency Value ----------
+  // ----------------- Historical Currency Value & Trend (XE API) -----------------
   const histFrom = el('histFromCurrency');
   const histTo = el('histToCurrency');
   const histDate = el('historicalDate');
   const fetchHistBtn = el('fetchHistoricalBtn');
   const histResult = el('historicalResult');
 
+  const trendCurrency = el('trendCurrency');
+  const showTrendBtn = el('showTrendBtn');
+  const trendCanvas = el('trendChart');
+  let trendChart;
+
   function populateHistoricalSelects() {
     for (const code of currencyList) {
       histFrom.add(new Option(code, code));
       histTo.add(new Option(code, code));
+      trendCurrency.add(new Option(code, code));
     }
     histFrom.value = 'USD';
     histTo.value = 'INR';
+    trendCurrency.value = 'INR';
   }
   populateHistoricalSelects();
 
+  // Fetch Historical Rate using XE API (via your Vercel function)
   fetchHistBtn.addEventListener('click', async () => {
     const from = histFrom.value;
     const to = histTo.value;
@@ -185,30 +193,22 @@
 
     histResult.textContent = 'Fetching...';
     try {
-      const res = await fetch(`https://api.exchangerate.host/${date}?base=${from}&symbols=${to}`);
+      const res = await fetch(`/api/xeConvert?from=${from}&to=${to}&date=${date}&amount=1`);
       const data = await res.json();
-      if (!data || !data.rates || !data.rates[to]) {
+
+      if (!data || !data.result) {
         histResult.textContent = 'No data available for this date.';
         return;
       }
 
-      const rate = data.rates[to];
-      histResult.textContent = `On ${date}, 1 ${from} = ${rate.toFixed(4)} ${to}`;
+      histResult.textContent = `On ${date}, 1 ${from} = ${data.result} ${to}`;
     } catch (err) {
       histResult.textContent = 'Error fetching data.';
       console.error(err);
     }
   });
 
-  // ---------- Currency Trend Graph ----------
-  const trendCurrency = el('trendCurrency');
-  const showTrendBtn = el('showTrendBtn');
-  const trendCanvas = el('trendChart');
-  let trendChart;
-
-  for (const code of currencyList) trendCurrency.add(new Option(code, code));
-  trendCurrency.value = 'INR';
-
+  // Currency Trend (Past 30 Days) using XE API
   showTrendBtn.addEventListener('click', async () => {
     const to = trendCurrency.value;
     const base = 'USD';
@@ -222,8 +222,7 @@
       const startDate = start.toISOString().split('T')[0];
       const endDate = end.toISOString().split('T')[0];
 
-      const url = `https://api.exchangerate.host/timeseries?start_date=${startDate}&end_date=${endDate}&base=${base}&symbols=${to}`;
-      const res = await fetch(url);
+      const res = await fetch(`/api/xeTimeseries?base=${base}&symbols=${to}&start=${startDate}&end=${endDate}`);
       const data = await res.json();
 
       if (!data || !data.rates) {
@@ -241,7 +240,7 @@
         data: {
           labels,
           datasets: [{
-            label: `USD → ${to} (Last 30 Days)`,
+            label: `${base} → ${to} (Last 30 Days)`,
             data: values,
             borderColor: '#4A90E2',
             borderWidth: 2,
@@ -264,47 +263,6 @@
       showTrendBtn.disabled = false;
     }
   });
-  // ----------------- XE API Integration for New Features -----------------
-const xeApiKey = "573rl35geg7poqfvuo7ljv7qtq"; // Replace with your XE API key
-
-// Example: New feature 1 — Convert using XE API
-async function xeConvertCurrency(from, to, amount) {
-  try {
-    const res = await fetch(`https://currencydata.xe.com/v1/convert?from=${from}&to=${to}&amount=${amount}&access_key=${xeApiKey}`);
-    const data = await res.json();
-
-    if(data.success) {
-      console.log(`XE Conversion: ${amount} ${from} → ${data.result} ${to}`);
-      return data.result;
-    } else {
-      console.error("XE API Error:", data.error);
-      return null;
-    }
-  } catch(err) {
-    console.error("XE API Fetch Error:", err);
-    return null;
-  }
-}
-
-// Example: New feature 2 — Historical XE Rates
-async function xeFetchHistorical(from, to, date) {
-  try {
-    const res = await fetch(`https://currencydata.xe.com/v1/convert?from=${from}&to=${to}&date=${date}&amount=1&access_key=${xeApiKey}`);
-    const data = await res.json();
-
-    if(data.success) {
-      console.log(`XE Historical: 1 ${from} → ${data.result} ${to} on ${date}`);
-      return data.result;
-    } else {
-      console.error("XE Historical Error:", data.error);
-      return null;
-    }
-  } catch(err) {
-    console.error("XE Historical Fetch Error:", err);
-    return null;
-  }
-}
-
 
   // ---------- Init ----------
   function init() {
