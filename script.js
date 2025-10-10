@@ -255,6 +255,85 @@ showHistoryBtn.addEventListener("click", async () => {
     showHistoryBtn.disabled = false;
   }
 });
+// ---------- USD Exchange Rate 1-Month Graph ----------
+const showUSDGraphBtn = document.getElementById("showUSDGraphBtn");
+const usdChartCanvas = document.getElementById("usdChart");
+let usdChart;
+
+showUSDGraphBtn.addEventListener("click", async () => {
+  const to = toCurrency.value.toUpperCase(); // Target currency
+  const base = "USD"; // Always base as USD
+
+  if (base === to) {
+    alert("Please select a different currency to compare with USD.");
+    return;
+  }
+
+  showUSDGraphBtn.textContent = "Loading...";
+  showUSDGraphBtn.disabled = true;
+
+  try {
+    const end = new Date();
+    const start = new Date();
+    start.setDate(end.getDate() - 30);
+
+    const startDate = start.toISOString().split("T")[0];
+    const endDate = end.toISOString().split("T")[0];
+
+    // Use the exchangerate.host timeseries API
+    const url = `https://api.exchangerate.host/timeseries?start_date=${startDate}&end_date=${endDate}&base=${base}&symbols=${to}`;
+    const res = await fetch(url);
+    const data = await res.json();
+
+    if (!data.success || !data.rates) {
+      alert("No data available for this currency pair.");
+      return;
+    }
+
+    const labels = Object.keys(data.rates);
+    const values = labels.map(date => data.rates[date][to]);
+
+    if (!values.some(v => v)) {
+      alert("No historical data found for this currency pair.");
+      return;
+    }
+
+    if (usdChart) usdChart.destroy();
+
+    usdChart = new Chart(usdChartCanvas, {
+      type: "line",
+      data: {
+        labels,
+        datasets: [{
+          label: `USD → ${to} (Last 30 Days)`,
+          data: values,
+          borderColor: "#00BFFF",
+          borderWidth: 2,
+          fill: false,
+          tension: 0.2
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          title: {
+            display: true,
+            text: `USD to ${to} Exchange Rate Trend (Last 30 Days)`
+          }
+        },
+        scales: {
+          y: { beginAtZero: false }
+        }
+      }
+    });
+  } catch (err) {
+    console.error(err);
+    alert("Failed to load USD trend data.");
+  } finally {
+    showUSDGraphBtn.textContent = "Show USD 1-Month Trend";
+    showUSDGraphBtn.disabled = false;
+  }
+});
 
 
 })();
