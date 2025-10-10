@@ -30,25 +30,46 @@ export default async function handler(req, res) {
 
     const data = await response.json();
 
+    console.log("XE API Response:", data);
+
     if (!response.ok) {
       console.error('XE API Error:', data);
       return res.status(response.status).json({ error: data.message || "Failed to fetch historical rate" });
     }
 
-    // XE API returns structure like: { from, to, timestamp, mid, amount, ...}
-    const result = data.mid * amount;
+    // XE API can return data in different formats depending on the endpoint
+    // Try to extract the rate from various possible locations
+    let rate = null;
+
+    if (data.mid !== undefined) {
+      rate = data.mid;
+    } else if (data.quotes && Array.isArray(data.quotes) && data.quotes.length > 0) {
+      rate = data.quotes[0].mid;
+    } else if (data.rate !== undefined) {
+      rate = data.rate;
+    }
+
+    if (rate === null || isNaN(rate)) {
+      console.error("Could not extract rate from response:", data);
+      return res.status(500).json({ 
+        error: "Could not parse exchange rate from API response",
+        debug: data 
+      });
+    }
+
+    const result = (rate * parseFloat(amount)).toFixed(6);
 
     res.status(200).json({
       from,
       to,
       date,
       amount,
-      result: result.toFixed(6),
-      rate: data.mid
+      result,
+      rate: rate.toFixed(6)
     });
 
   } catch (error) {
     console.error('Historical conversion error:', error);
-    res.status(500).json({ error: "Server error fetching historical rate" });
+    res.status(500).json({ error: "Server error fetching historical rate", details: error.message });
   }
 }
